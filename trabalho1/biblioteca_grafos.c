@@ -8,8 +8,19 @@
 
 #define MAX_VERTICES 100
 
+typedef struct {
+    int tamanho;
+    int vertices[MAX_VERTICES];
+} Componente;
+
 int compara(const void *a, const void *b) {
     return (*(int *)a - *(int *)b);
+}
+
+int compara_componentes(const void *a, const void *b) {
+    Componente *compA = (Componente *)a;
+    Componente *compB = (Componente *)b;
+    return compB->tamanho - compA->tamanho;
 }
 
 void cria_matriz_adjacencia(FILE *arquivo, int num_vertices, int **matriz) {
@@ -20,7 +31,7 @@ void cria_matriz_adjacencia(FILE *arquivo, int num_vertices, int **matriz) {
     }
 }
 
-void bfs(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_saida) {
+void busca_largura(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_saida) {
     int fila[MAX_VERTICES], nivel[MAX_VERTICES], pai[MAX_VERTICES], visitado[MAX_VERTICES];
     int inicio = 0, fim = 0;
 
@@ -54,19 +65,19 @@ void bfs(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_said
     }
 }
 
-void dfs_recursiva(int **matriz, int vertice, int *visitado, int *nivel, int *pai, int profundidade, FILE *arquivo_saida, int num_vertices) {
+void busca_profundidade_recursiva(int **matriz, int vertice, int *visitado, int *nivel, int *pai, int profundidade, FILE *arquivo_saida, int num_vertices) {
     visitado[vertice] = 1;
     nivel[vertice] = profundidade;
 
     for (int i = 0; i < num_vertices; i++) {
         if (matriz[vertice][i] && !visitado[i]) {
             pai[i] = vertice + 1;
-            dfs_recursiva(matriz, i, visitado, nivel, pai, profundidade + 1, arquivo_saida, num_vertices);
+            busca_profundidade_recursiva(matriz, i, visitado, nivel, pai, profundidade + 1, arquivo_saida, num_vertices);
         }
     }
 }
 
-void dfs(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_saida) {
+void busca_profundidade(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_saida) {
     int visitado[MAX_VERTICES], nivel[MAX_VERTICES], pai[MAX_VERTICES];
 
     for (int i = 0; i < num_vertices; i++) {
@@ -76,7 +87,7 @@ void dfs(int **matriz, int num_vertices, int vertice_inicial, FILE *arquivo_said
     }
 
     pai[vertice_inicial] = 0;
-    dfs_recursiva(matriz, vertice_inicial, visitado, nivel, pai, 0, arquivo_saida, num_vertices);
+    busca_profundidade_recursiva(matriz, vertice_inicial, visitado, nivel, pai, 0, arquivo_saida, num_vertices);
 
     fprintf(arquivo_saida, "\nBusca em Profundidade (DFS):\n");
     for (int i = 0; i < num_vertices; i++) {
@@ -136,6 +147,43 @@ int distancia_entre_vertices(int **matriz, int num_vertices, int vertice_inicial
     return distancias[vertice_final - 1];
 }
 
+int encontrar_componentes_conexas(int **matriz, int num_vertices, Componente *componentes) {
+    int id_componente[MAX_VERTICES];
+    for (int i = 0; i < num_vertices; i++) {
+        id_componente[i] = -1;
+    }
+
+    int componente_atual = 0;
+
+    for (int v = 0; v < num_vertices; v++) {
+        if (id_componente[v] == -1) {
+            int fila[MAX_VERTICES];
+            int inicio = 0, fim = 0;
+
+            fila[fim++] = v;
+            id_componente[v] = componente_atual;
+            componentes[componente_atual].tamanho = 0;
+
+            while (inicio < fim) {
+                int atual = fila[inicio++];
+
+                componentes[componente_atual].vertices[componentes[componente_atual].tamanho++] = atual + 1;
+
+                for (int i = 0; i < num_vertices; i++) {
+                    if (matriz[atual][i] && id_componente[i] == -1) {
+                        fila[fim++] = i;
+                        id_componente[i] = componente_atual;
+                    }
+                }
+            }
+
+            componente_atual++;
+        }
+    }
+
+    return componente_atual;
+}
+
 void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao, int vertice_inicial, int vertice_final) {
     FILE *arquivo = fopen(nome_arquivo, "r");
     if (arquivo == NULL) {
@@ -186,7 +234,6 @@ void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao,
     double grau_medio = soma_graus / num_vertices;
 
     qsort(graus, num_vertices, sizeof(int), compara);
-
     double mediana_grau;
     if (num_vertices % 2 == 0) {
         mediana_grau = (graus[num_vertices / 2 - 1] + graus[num_vertices / 2]) / 2.0;
@@ -201,8 +248,8 @@ void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao,
     fprintf(arquivo_saida, "Grau médio: %.2f\n", grau_medio);
     fprintf(arquivo_saida, "Mediana de grau: %.2f\n", mediana_grau);
 
-    bfs(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
-    dfs(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
+    busca_largura(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
+    busca_profundidade(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
 
     if (vertice_final != -1) {
         int distancia = distancia_entre_vertices(matriz, num_vertices, vertice_inicial, vertice_final);
@@ -210,6 +257,22 @@ void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao,
 
         int diametro = calcula_diametro(matriz, num_vertices);
         fprintf(arquivo_saida, "Diâmetro do grafo: %d\n", diametro);
+    }
+
+    Componente componentes[MAX_VERTICES];
+    int num_componentes = encontrar_componentes_conexas(matriz, num_vertices, componentes);
+
+    qsort(componentes, num_componentes, sizeof(Componente), compara_componentes);
+
+    fprintf(arquivo_saida, "\nComponentes Conexas:\n");
+    fprintf(arquivo_saida, "Número de componentes conexas: %d\n", num_componentes);
+    for (int i = 0; i < num_componentes; i++) {
+        fprintf(arquivo_saida, "Componente %d:\n", i + 1);
+        fprintf(arquivo_saida, "  Tamanho: %d\n", componentes[i].tamanho);
+        fprintf(arquivo_saida, "  Vértices: ");
+        for (int j = 0; j < componentes[i].tamanho; j++) {
+            fprintf(arquivo_saida, "%d%s", componentes[i].vertices[j], (j < componentes[i].tamanho - 1) ? ", " : "\n");
+        }
     }
 
     for (int i = 0; i < num_vertices; i++) {

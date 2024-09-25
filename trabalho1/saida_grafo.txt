@@ -1,0 +1,24 @@
+Número de vértices: 4
+Número de arestas: 4
+Grau mínimo: 1
+Grau máximo: 3
+Grau médio: 2.00
+Mediana de grau: 2.00
+
+Busca em Largura (BFS):
+Vértice: 1, Pai: 3, Nível: 2
+Vértice: 2, Pai: 3, Nível: 2
+Vértice: 3, Pai: 4, Nível: 1
+Vértice: 4, Pai: 0, Nível: 0
+
+Busca em Profundidade (DFS):
+Vértice: 1, Pai: 3, Nível: 2
+Vértice: 2, Pai: 1, Nível: 3
+Vértice: 3, Pai: 4, Nível: 1
+Vértice: 4, Pai: 0, Nível: 0
+
+Componentes Conexas:
+Número de componentes conexas: 1
+Componente 1:
+  Tamanho: 4
+  Vértices: 1, 2, 3, 4
