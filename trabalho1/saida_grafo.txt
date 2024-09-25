@@ -5,17 +5,20 @@ Grau máximo: 3
 Grau médio: 2.00
 Mediana de grau: 2.00
 
-Busca em Largura (BFS):
-Vértice: 1, Pai: 3, Nível: 2
-Vértice: 2, Pai: 3, Nível: 2
-Vértice: 3, Pai: 4, Nível: 1
-Vértice: 4, Pai: 0, Nível: 0
+Busca em Largura (BFS) - Lista de Adjacência:
+Vértice: 1, Pai: 0, Nível: 0
+Vértice: 2, Pai: 1, Nível: 1
+Vértice: 3, Pai: 1, Nível: 1
+Vértice: 4, Pai: 3, Nível: 2
 
-Busca em Profundidade (DFS):
-Vértice: 1, Pai: 3, Nível: 2
-Vértice: 2, Pai: 1, Nível: 3
-Vértice: 3, Pai: 4, Nível: 1
-Vértice: 4, Pai: 0, Nível: 0
+Busca em Profundidade (DFS) - Lista de Adjacência:
+Vértice: 1, Pai: 0, Nível: 0
+Vértice: 2, Pai: 1, Nível: 1
+Vértice: 3, Pai: 2, Nível: 2
+Vértice: 4, Pai: 3, Nível: 3
+
+Distância entre vértice 1 e vértice 2: 1
+Diâmetro do grafo: 2
 
 Componentes Conexas:
 Número de componentes conexas: 1
