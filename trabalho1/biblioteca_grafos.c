@@ -1,6 +1,5 @@
 // Teoria do Grafos - 2024.2 - Universidade Federal do Rio de Janeiro
-// Trabalho 1 : 
-// Entrada e Saida OK
+// Trabalho 1 
 // Alunos: Karen Pacheco e Guilherme
 
 #include <stdio.h>
@@ -205,11 +204,13 @@ void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao,
     bfs(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
     dfs(matriz, num_vertices, vertice_inicial - 1, arquivo_saida);
 
-    int distancia = distancia_entre_vertices(matriz, num_vertices, vertice_inicial, vertice_final);
-    fprintf(arquivo_saida, "\nDistância entre vértice %d e vértice %d: %d\n", vertice_inicial, vertice_final, distancia);
+    if (vertice_final != -1) {
+        int distancia = distancia_entre_vertices(matriz, num_vertices, vertice_inicial, vertice_final);
+        fprintf(arquivo_saida, "\nDistância entre vértice %d e vértice %d: %d\n", vertice_inicial, vertice_final, distancia);
 
-    int diametro = calcula_diametro(matriz, num_vertices);
-    fprintf(arquivo_saida, "Diâmetro do grafo: %d\n", diametro);
+        int diametro = calcula_diametro(matriz, num_vertices);
+        fprintf(arquivo_saida, "Diâmetro do grafo: %d\n", diametro);
+    }
 
     for (int i = 0; i < num_vertices; i++) {
         free(matriz[i]);
@@ -223,15 +224,15 @@ void processa_arquivo_grafo(const char *nome_arquivo, const char *representacao,
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 5) {
-        printf("Uso: %s <arquivo_grafo> <representacao (matriz|lista)> <vertice_inicial> <vertice_final>\n", argv[0]);
+    if (argc < 4 || argc > 5) {
+        printf("Uso: %s <arquivo_grafo> <representacao (matriz|lista)> <vertice_inicial> [<vertice_final>]\n", argv[0]);
         return 1;
     }
 
     const char *nome_arquivo = argv[1];
     const char *representacao = argv[2];
     int vertice_inicial = atoi(argv[3]);
-    int vertice_final = atoi(argv[4]);
+    int vertice_final = (argc == 5) ? atoi(argv[4]) : -1;
 
     processa_arquivo_grafo(nome_arquivo, representacao, vertice_inicial, vertice_final);
     return 0;
