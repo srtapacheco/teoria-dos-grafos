@@ -5,7 +5,7 @@ int main() {
     GrafoLista* grafo_lista;
     
     // Carrega o grafo
-    processa_lista_adjacencia("grafo_1.txt", &grafo_lista);
+    processa_lista_adjacencia("grafo_6.txt", &grafo_lista);
 
     // Calcula as distâncias entre os pares de vértices
     int distancia_10_20 = bfs_calcula_distancia_entre_vertices(grafo_lista, 9, 19); // Vértices 10 e 20 (índices 9 e 19)
