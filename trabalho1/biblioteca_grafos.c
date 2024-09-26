@@ -13,6 +13,11 @@ typedef struct GrafoLista {
     No** lista_adjacencia;
 } GrafoLista;
 
+typedef struct GrafoMatriz {
+    int num_vertices;
+    int** matriz_adjacencia;
+} GrafoMatriz;
+
 // Função para criar a lista de adjacência
 GrafoLista* cria_lista_adjacencia(int num_vertices) {
     GrafoLista* grafo = (GrafoLista*)malloc(sizeof(GrafoLista));
@@ -21,6 +26,18 @@ GrafoLista* cria_lista_adjacencia(int num_vertices) {
 
     for (int i = 0; i < num_vertices; i++) {
         grafo->lista_adjacencia[i] = NULL;
+    }
+    return grafo;
+}
+
+// Função para criar a matriz de adjacência
+GrafoMatriz* cria_matriz_adjacencia(int num_vertices) {
+    GrafoMatriz* grafo = (GrafoMatriz*)malloc(sizeof(GrafoMatriz));
+    grafo->num_vertices = num_vertices;
+    grafo->matriz_adjacencia = (int**)malloc(num_vertices * sizeof(int*));
+
+    for (int i = 0; i < num_vertices; i++) {
+        grafo->matriz_adjacencia[i] = (int*)calloc(num_vertices, sizeof(int));
     }
     return grafo;
 }
@@ -38,6 +55,12 @@ void adiciona_aresta_lista(GrafoLista* grafo, int v1, int v2) {
     grafo->lista_adjacencia[v2] = novo_no;
 }
 
+// Função para adicionar aresta na matriz de adjacência
+void adiciona_aresta_matriz(GrafoMatriz* grafo, int v1, int v2) {
+    grafo->matriz_adjacencia[v1][v2] = 1;
+    grafo->matriz_adjacencia[v2][v1] = 1; // Grafo não direcionado
+}
+
 // Função para liberar memória da lista de adjacência
 void libera_lista_adjacencia(GrafoLista* grafo) {
     for (int i = 0; i < grafo->num_vertices; i++) {
@@ -52,10 +75,138 @@ void libera_lista_adjacencia(GrafoLista* grafo) {
     free(grafo);
 }
 
-// Declaração da função bfs_calcula_distancia
-int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial);
+// Função para liberar memória da matriz de adjacência
+void libera_matriz_adjacencia(GrafoMatriz* grafo) {
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        free(grafo->matriz_adjacencia[i]);
+    }
+    free(grafo->matriz_adjacencia);
+    free(grafo);
+}
 
-// Função auxiliar para calcular o grau de cada vértice
+// Função para calcular o grau de um grafo em matriz de adjacência
+void calcula_graus_matriz(GrafoMatriz* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas) {
+    int* graus = (int*)calloc(grafo->num_vertices, sizeof(int));
+    int total_graus = 0;
+
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        for (int j = 0; j < grafo->num_vertices; j++) {
+            if (grafo->matriz_adjacencia[i][j] == 1) {
+                graus[i]++;
+            }
+        }
+        total_graus += graus[i];
+    }
+
+    *num_arestas = total_graus / 2;
+    *grau_min = graus[0];
+    *grau_max = graus[0];
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        if (graus[i] < *grau_min) *grau_min = graus[i];
+        if (graus[i] > *grau_max) *grau_max = graus[i];
+    }
+
+    *grau_medio = (double)total_graus / grafo->num_vertices;
+
+    // Calcular a mediana
+    for (int i = 0; i < grafo->num_vertices - 1; i++) {
+        for (int j = i + 1; j < grafo->num_vertices; j++) {
+            if (graus[i] > graus[j]) {
+                int temp = graus[i];
+                graus[i] = graus[j];
+                graus[j] = temp;
+            }
+        }
+    }
+
+    if (grafo->num_vertices % 2 == 0) {
+        *mediana_grau = (graus[grafo->num_vertices / 2 - 1] + graus[grafo->num_vertices / 2]) / 2.0;
+    } else {
+        *mediana_grau = graus[grafo->num_vertices / 2];
+    }
+
+    free(graus);
+}
+
+// Função para realizar BFS em matriz de adjacência
+void bfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquivo_saida) {
+    bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
+    int* fila = (int*)malloc(grafo->num_vertices * sizeof(int));
+    int inicio = 0, fim = 0;
+
+    visitado[vertice_inicial] = true;
+    fila[fim++] = vertice_inicial;
+
+    fprintf(arquivo_saida, "\nBusca em Largura (BFS) - Matriz de Adjacência:\n");
+    while (inicio < fim) {
+        int vertice_atual = fila[inicio++];
+        for (int i = 0; i < grafo->num_vertices; i++) {
+            if (grafo->matriz_adjacencia[vertice_atual][i] == 1 && !visitado[i]) {
+                visitado[i] = true;
+                fila[fim++] = i;
+            }
+        }
+    }
+
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        if (visitado[i]) {
+            fprintf(arquivo_saida, "Vértice: %d foi visitado\n", i + 1);
+        }
+    }
+
+    free(visitado);
+    free(fila);
+}
+
+// Função para realizar DFS em matriz de adjacência
+void dfs_matriz_adjacencia_aux(GrafoMatriz* grafo, int vertice, bool* visitado) {
+    visitado[vertice] = true;
+
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        if (grafo->matriz_adjacencia[vertice][i] == 1 && !visitado[i]) {
+            dfs_matriz_adjacencia_aux(grafo, i, visitado);
+        }
+    }
+}
+
+void dfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquivo_saida) {
+    bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
+
+    dfs_matriz_adjacencia_aux(grafo, vertice_inicial, visitado);
+
+    fprintf(arquivo_saida, "\nBusca em Profundidade (DFS) - Matriz de Adjacência:\n");
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        if (visitado[i]) {
+            fprintf(arquivo_saida, "Vértice: %d foi visitado\n", i + 1);
+        }
+    }
+
+    free(visitado);
+}
+
+// Função para processar o arquivo e representar o grafo em matriz de adjacência
+int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo) {
+    FILE* arquivo = fopen(nome_arquivo, "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo: %s\n", nome_arquivo);
+        return -1;
+    }
+
+    int num_vertices;
+    fscanf(arquivo, "%d", &num_vertices); // Ler o número de vértices do arquivo
+
+    *grafo = cria_matriz_adjacencia(num_vertices); // Aloca dinamicamente a matriz de adjacência
+
+    int v1, v2;
+    while (fscanf(arquivo, "%d %d", &v1, &v2) != EOF) {
+        adiciona_aresta_matriz(*grafo, v1 - 1, v2 - 1);
+    }
+
+    fclose(arquivo);
+    return num_vertices; // Retorna o número de vértices
+}
+
+// Função para calcular o grau do grafo em lista de adjacência
 void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas) {
     int* graus = (int*)calloc(grafo->num_vertices, sizeof(int));
     int total_graus = 0;
@@ -99,7 +250,7 @@ void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau
     free(graus);
 }
 
-// Função para realizar BFS e gerar a saída
+// Função para realizar BFS em lista de adjacência
 void bfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_saida) {
     bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
@@ -138,7 +289,7 @@ void bfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_
     free(pai);
 }
 
-// Função para realizar DFS
+// Função para realizar DFS em lista de adjacência
 void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int *nivel, bool *visitado, int nivel_atual) {
     visitado[vertice_inicial] = true;
     nivel[vertice_inicial] = nivel_atual;
@@ -153,7 +304,7 @@ void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int 
     }
 }
 
-// Função para iniciar DFS
+// Função para iniciar DFS na lista de adjacência
 void processa_dfs_lista(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_saida) {
     bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int *pai = (int*)malloc(grafo->num_vertices * sizeof(int));
@@ -173,158 +324,36 @@ void processa_dfs_lista(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_sa
     free(nivel);
 }
 
-// Função para calcular o diâmetro do grafo
-int calcula_diametro(GrafoLista* grafo) {
-    int diametro = 0;
-
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        int max_dist = bfs_calcula_distancia(grafo, i);
-        if (max_dist > diametro) {
-            diametro = max_dist;
-        }
-    }
-
-    return diametro;
-}
-
-// Função para calcular a maior distância a partir de um vértice (BFS auxiliar)
-int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial) {
-    bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
-    int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
-    int *nivel = (int*)calloc(grafo->num_vertices, sizeof(int));
-
-    int inicio = 0, fim = 0;
-    visitado[vertice_inicial] = true;
-    fila[fim++] = vertice_inicial;
-    nivel[vertice_inicial] = 0;
-
-    int max_nivel = 0;
-    while (inicio < fim) {
-        int vertice_atual = fila[inicio++];
-        No* adjacente = grafo->lista_adjacencia[vertice_atual];
-        while (adjacente != NULL) {
-            if (!visitado[adjacente->vertice]) {
-                visitado[adjacente->vertice] = true;
-                fila[fim++] = adjacente->vertice;
-                nivel[adjacente->vertice] = nivel[vertice_atual] + 1;
-                if (nivel[adjacente->vertice] > max_nivel) {
-                    max_nivel = nivel[adjacente->vertice];
-                }
-            }
-            adjacente = adjacente->proximo;
-        }
-    }
-
-    free(visitado);
-    free(fila);
-    free(nivel);
-    return max_nivel;
-}
-
-// Função para descobrir os componentes conexos do grafo
-void encontra_componentes_conexos(GrafoLista* grafo, FILE* arquivo_saida) {
-    bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
-    int* componentes = (int*)malloc(grafo->num_vertices * sizeof(int));
-    int num_componentes = 0;
-
-    int* tamanhos = (int*)malloc(grafo->num_vertices * sizeof(int));
-    int** listas_vertices = (int**)malloc(grafo->num_vertices * sizeof(int*));
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        listas_vertices[i] = (int*)malloc(grafo->num_vertices * sizeof(int));
-        tamanhos[i] = 0;
-    }
-
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        if (!visitado[i]) {
-            num_componentes++;
-            int tamanho = 0;
-            int inicio = 0, fim = 0;
-            componentes[i] = num_componentes;
-
-            int* fila = (int*)malloc(grafo->num_vertices * sizeof(int));
-            fila[fim++] = i;
-            visitado[i] = true;
-
-            while (inicio < fim) {
-                int vertice_atual = fila[inicio++];
-                listas_vertices[num_componentes - 1][tamanho++] = vertice_atual + 1;
-
-                No* adjacente = grafo->lista_adjacencia[vertice_atual];
-                while (adjacente != NULL) {
-                    if (!visitado[adjacente->vertice]) {
-                        visitado[adjacente->vertice] = true;
-                        fila[fim++] = adjacente->vertice;
-                    }
-                    adjacente = adjacente->proximo;
-                }
-            }
-
-            tamanhos[num_componentes - 1] = tamanho;
-            free(fila);
-        }
-    }
-
-    // Ordenar os componentes por tamanho (decrescente)
-    for (int i = 0; i < num_componentes - 1; i++) {
-        for (int j = i + 1; j < num_componentes; j++) {
-            if (tamanhos[i] < tamanhos[j]) {
-                int temp_tamanho = tamanhos[i];
-                tamanhos[i] = tamanhos[j];
-                tamanhos[j] = temp_tamanho;
-
-                int* temp_lista = listas_vertices[i];
-                listas_vertices[i] = listas_vertices[j];
-                listas_vertices[j] = temp_lista;
-            }
-        }
-    }
-
-    fprintf(arquivo_saida, "\nComponentes Conexas:\nNúmero de componentes conexas: %d\n", num_componentes);
-    for (int i = 0; i < num_componentes; i++) {
-        fprintf(arquivo_saida, "Componente %d:\n", i + 1);
-        fprintf(arquivo_saida, "  Tamanho: %d\n  Vértices: ", tamanhos[i]);
-        for (int j = 0; j < tamanhos[i]; j++) {
-            if (j != 0) fprintf(arquivo_saida, ", ");
-            fprintf(arquivo_saida, "%d", listas_vertices[i][j]);
-        }
-        fprintf(arquivo_saida, "\n");
-    }
-
-    free(visitado);
-    free(componentes);
-    free(tamanhos);
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        free(listas_vertices[i]);
-    }
-    free(listas_vertices);
-}
-
 // Função para processar o arquivo e representar o grafo em lista de adjacência
-void processa_lista_adjacencia(const char *nome_arquivo, GrafoLista *grafo) {
+int processa_lista_adjacencia(const char *nome_arquivo, GrafoLista **grafo) {
     FILE *arquivo = fopen(nome_arquivo, "r");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo: %s\n", nome_arquivo);
-        return;
+        return -1;
     }
+
+    int num_vertices;
+    fscanf(arquivo, "%d", &num_vertices);  // Ler o número de vértices do arquivo
+
+    *grafo = cria_lista_adjacencia(num_vertices);  // Aloca dinamicamente a lista de adjacência
 
     int v1, v2;
-    fscanf(arquivo, "%d", &grafo->num_vertices);
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        grafo->lista_adjacencia[i] = NULL;
-    }
-
     while (fscanf(arquivo, "%d %d", &v1, &v2) != EOF) {
-        adiciona_aresta_lista(grafo, v1 - 1, v2 - 1);
+        adiciona_aresta_lista(*grafo, v1 - 1, v2 - 1);
     }
 
     fclose(arquivo);
+    return num_vertices;  // Retorna o número de vértices
 }
 
 // Função principal
 int main() {
     char nome_arquivo[100];
     int vertice_inicial;
-    FILE* arquivo_saida = fopen("saida_grafo.txt", "w");
+    GrafoLista* grafo_lista;
+    GrafoMatriz* grafo_matriz;
+    FILE* arquivo_saida_lista = fopen("saida_grafo_lista.txt", "w");
+    FILE* arquivo_saida_matriz = fopen("saida_grafo_matriz.txt", "w");
 
     // Entrada de dados pelo usuário
     printf("Digite o nome do arquivo de entrada (com extensão): ");
@@ -332,40 +361,66 @@ int main() {
 
     printf("Digite o vértice inicial (começando em 1): ");
     scanf("%d", &vertice_inicial);
-    vertice_inicial--;  // Para ajustar ao índice 0
+    vertice_inicial--; // Para ajustar ao índice 0
 
-    GrafoLista *grafo = cria_lista_adjacencia(1000000);  // Ajuste de tamanho
-    processa_lista_adjacencia(nome_arquivo, grafo);
+    // Processar lista de adjacência
+    int num_vertices_lista = processa_lista_adjacencia(nome_arquivo, &grafo_lista);
+    if (num_vertices_lista == -1) {
+        printf("Erro ao processar o arquivo (Lista de Adjacência).\n");
+        return 1;
+    }
 
-    // Calcular graus e número de arestas
-    int grau_min, grau_max, num_arestas;
-    double grau_medio, mediana_grau;
-    calcula_graus(grafo, &grau_min, &grau_max, &grau_medio, &mediana_grau, &num_arestas);
+    // Processar matriz de adjacência
+    int num_vertices_matriz = processa_matriz_adjacencia(nome_arquivo, &grafo_matriz);
+    if (num_vertices_matriz == -1) {
+        printf("Erro ao processar o arquivo (Matriz de Adjacência).\n");
+        return 1;
+    }
 
-    fprintf(arquivo_saida, "Número de vértices: %d\n", grafo->num_vertices);
-    fprintf(arquivo_saida, "Número de arestas: %d\n", num_arestas);
-    fprintf(arquivo_saida, "Grau mínimo: %d\n", grau_min);
-    fprintf(arquivo_saida, "Grau máximo: %d\n", grau_max);
-    fprintf(arquivo_saida, "Grau médio: %.2f\n", grau_medio);
-    fprintf(arquivo_saida, "Mediana de grau: %.2f\n", mediana_grau);
+    // Calcular graus e número de arestas - Lista de Adjacência
+    int grau_min_lista, grau_max_lista, num_arestas_lista;
+    double grau_medio_lista, mediana_grau_lista;
+    calcula_graus(grafo_lista, &grau_min_lista, &grau_max_lista, &grau_medio_lista, &mediana_grau_lista, &num_arestas_lista);
 
-    // Realiza BFS
-    bfs_lista_adjacencia(grafo, vertice_inicial, arquivo_saida);
+    fprintf(arquivo_saida_lista, "Número de vértices: %d\n", grafo_lista->num_vertices);
+    fprintf(arquivo_saida_lista, "Número de arestas: %d\n", num_arestas_lista);
+    fprintf(arquivo_saida_lista, "Grau mínimo: %d\n", grau_min_lista);
+    fprintf(arquivo_saida_lista, "Grau máximo: %d\n", grau_max_lista);
+    fprintf(arquivo_saida_lista, "Grau médio: %.2f\n", grau_medio_lista);
+    fprintf(arquivo_saida_lista, "Mediana de grau: %.2f\n", mediana_grau_lista);
 
-    // Realiza DFS
-    processa_dfs_lista(grafo, vertice_inicial, arquivo_saida);
+    // Realiza BFS - Lista de Adjacência
+    bfs_lista_adjacencia(grafo_lista, vertice_inicial, arquivo_saida_lista);
 
-    // Calcula o diâmetro
-    int diametro = calcula_diametro(grafo);
-    fprintf(arquivo_saida, "\nDiâmetro do grafo: %d\n", diametro);
+    // Realiza DFS - Lista de Adjacência
+    processa_dfs_lista(grafo_lista, vertice_inicial, arquivo_saida_lista);
 
-    // Calcula componentes conexas
-    encontra_componentes_conexos(grafo, arquivo_saida);
+    // Calcular graus e número de arestas - Matriz de Adjacência
+    int grau_min_matriz, grau_max_matriz, num_arestas_matriz;
+    double grau_medio_matriz, mediana_grau_matriz;
+    calcula_graus_matriz(grafo_matriz, &grau_min_matriz, &grau_max_matriz, &grau_medio_matriz, &mediana_grau_matriz, &num_arestas_matriz);
 
-    libera_lista_adjacencia(grafo);
-    fclose(arquivo_saida);
+    fprintf(arquivo_saida_matriz, "Número de vértices: %d\n", grafo_matriz->num_vertices);
+    fprintf(arquivo_saida_matriz, "Número de arestas: %d\n", num_arestas_matriz);
+    fprintf(arquivo_saida_matriz, "Grau mínimo: %d\n", grau_min_matriz);
+    fprintf(arquivo_saida_matriz, "Grau máximo: %d\n", grau_max_matriz);
+    fprintf(arquivo_saida_matriz, "Grau médio: %.2f\n", grau_medio_matriz);
+    fprintf(arquivo_saida_matriz, "Mediana de grau: %.2f\n", mediana_grau_matriz);
 
-    printf("Operação concluída com sucesso. O resultado foi registrado no arquivo: saida_grafo.txt\n");
+    // Realiza BFS - Matriz de Adjacência
+    bfs_matriz_adjacencia(grafo_matriz, vertice_inicial, arquivo_saida_matriz);
+
+    // Realiza DFS - Matriz de Adjacência
+    dfs_matriz_adjacencia(grafo_matriz, vertice_inicial, arquivo_saida_matriz);
+
+    // Libera a memória utilizada
+    libera_lista_adjacencia(grafo_lista);
+    libera_matriz_adjacencia(grafo_matriz);
+
+    fclose(arquivo_saida_lista);
+    fclose(arquivo_saida_matriz);
+
+    printf("Operação concluída com sucesso. Resultados gravados nos arquivos de saída.\n");
 
     return 0;
 }
