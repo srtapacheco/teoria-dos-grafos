@@ -333,3 +333,170 @@ int processa_lista_adjacencia(const char *nome_arquivo, GrafoLista **grafo) {
     fclose(arquivo);
     return num_vertices;  // Retorna o número de vértices
 }
+
+// Função para calcular a maior distância a partir de um vértice (BFS auxiliar)
+int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial) {
+    bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
+    int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
+    int *nivel = (int*)calloc(grafo->num_vertices, sizeof(int));
+
+    int inicio = 0, fim = 0;
+    visitado[vertice_inicial] = true;
+    fila[fim++] = vertice_inicial;
+    nivel[vertice_inicial] = 0;
+
+    int max_nivel = 0;
+    while (inicio < fim) {
+        int vertice_atual = fila[inicio++];
+        No* adjacente = grafo->lista_adjacencia[vertice_atual];
+        while (adjacente != NULL) {
+            if (!visitado[adjacente->vertice]) {
+                visitado[adjacente->vertice] = true;
+                fila[fim++] = adjacente->vertice;
+                nivel[adjacente->vertice] = nivel[vertice_atual] + 1;
+                if (nivel[adjacente->vertice] > max_nivel) {
+                    max_nivel = nivel[adjacente->vertice];
+                }
+            }
+            adjacente = adjacente->proximo;
+        }
+    }
+
+    free(visitado);
+    free(fila);
+    free(nivel);
+    return max_nivel;
+}
+
+// Função para descobrir os componentes conexos do grafo
+void encontra_componentes_conexos(GrafoLista* grafo, FILE* arquivo_saida) {
+    bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
+    int* componentes = (int*)malloc(grafo->num_vertices * sizeof(int));
+    int num_componentes = 0;
+
+    int* tamanhos = (int*)malloc(grafo->num_vertices * sizeof(int));
+    int** listas_vertices = (int**)malloc(grafo->num_vertices * sizeof(int*));
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        listas_vertices[i] = (int*)malloc(grafo->num_vertices * sizeof(int));
+        tamanhos[i] = 0;
+    }
+
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        if (!visitado[i]) {
+            num_componentes++;
+            int tamanho = 0;
+            int inicio = 0, fim = 0;
+            componentes[i] = num_componentes;
+
+            int* fila = (int*)malloc(grafo->num_vertices * sizeof(int));
+            fila[fim++] = i;
+            visitado[i] = true;
+
+            while (inicio < fim) {
+                int vertice_atual = fila[inicio++];
+                listas_vertices[num_componentes - 1][tamanho++] = vertice_atual + 1;
+
+                No* adjacente = grafo->lista_adjacencia[vertice_atual];
+                while (adjacente != NULL) {
+                    if (!visitado[adjacente->vertice]) {
+                        visitado[adjacente->vertice] = true;
+                        fila[fim++] = adjacente->vertice;
+                    }
+                    adjacente = adjacente->proximo;
+                }
+            }
+
+            tamanhos[num_componentes - 1] = tamanho;
+            free(fila);
+        }
+    }
+
+    // Ordenar os componentes por tamanho (decrescente)
+    for (int i = 0; i < num_componentes - 1; i++) {
+        for (int j = i + 1; j < num_componentes; j++) {
+            if (tamanhos[i] < tamanhos[j]) {
+                int temp_tamanho = tamanhos[i];
+                tamanhos[i] = tamanhos[j];
+                tamanhos[j] = temp_tamanho;
+
+                int* temp_lista = listas_vertices[i];
+                listas_vertices[i] = listas_vertices[j];
+                listas_vertices[j] = temp_lista;
+            }
+        }
+    }
+
+    fprintf(arquivo_saida, "\nComponentes Conexas:\nNúmero de componentes conexas: %d\n", num_componentes);
+    for (int i = 0; i < num_componentes; i++) {
+        fprintf(arquivo_saida, "Componente %d:\n", i + 1);
+        fprintf(arquivo_saida, "  Tamanho: %d\n  Vértices: ", tamanhos[i]);
+        for (int j = 0; j < tamanhos[i]; j++) {
+            if (j != 0) fprintf(arquivo_saida, ", ");
+            fprintf(arquivo_saida, "%d", listas_vertices[i][j]);
+        }
+        fprintf(arquivo_saida, "\n");
+    }
+
+    free(visitado);
+    free(componentes);
+    free(tamanhos);
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        free(listas_vertices[i]);
+    }
+    free(listas_vertices);
+}
+
+// Função para calcular o diâmetro do grafo
+int calcula_diametro(GrafoLista* grafo) {
+    int diametro = 0;
+
+    for (int i = 0; i < grafo->num_vertices; i++) {
+        int max_dist = bfs_calcula_distancia(grafo, i);
+        if (max_dist > diametro) {
+            diametro = max_dist;
+        }
+    }
+
+    return diametro;
+}
+
+int bfs_calcula_distancia_entre_vertices(GrafoLista *grafo, int vertice_inicial, int vertice_final) {
+    bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
+    int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
+    int *nivel = (int*)calloc(grafo->num_vertices, sizeof(int));
+
+    int inicio = 0, fim = 0;
+    visitado[vertice_inicial] = true;
+    fila[fim++] = vertice_inicial;
+    nivel[vertice_inicial] = 0;
+
+    while (inicio < fim) {
+        int vertice_atual = fila[inicio++];
+
+        // Se encontramos o vértice final, retornamos a distância
+        if (vertice_atual == vertice_final) {
+            int distancia = nivel[vertice_final];
+            free(visitado);
+            free(fila);
+            free(nivel);
+            return distancia;
+        }
+
+        No* adjacente = grafo->lista_adjacencia[vertice_atual];
+        while (adjacente != NULL) {
+            if (!visitado[adjacente->vertice]) {
+                visitado[adjacente->vertice] = true;
+                fila[fim++] = adjacente->vertice;
+                nivel[adjacente->vertice] = nivel[vertice_atual] + 1;
+            }
+            adjacente = adjacente->proximo;
+        }
+    }
+
+    // Se não encontrar um caminho, retorna -1
+    free(visitado);
+    free(fila);
+    free(nivel);
+    return -1;
+}
+

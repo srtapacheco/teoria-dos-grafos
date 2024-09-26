@@ -30,5 +30,6 @@ void bfs_lista_adjacencia(GrafoLista* grafo, int vertice_inicial, FILE* arquivo_
 void processa_dfs_lista(GrafoLista* grafo, int vertice_inicial, FILE* arquivo_saida);
 int processa_lista_adjacencia(const char* nome_arquivo, GrafoLista** grafo);
 int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo);
+int bfs_calcula_distancia_entre_vertices(GrafoLista* grafo, int vertice_inicial, int vertice_final);
 
 #endif // BIBLIOTECA_GRAFOS_H
