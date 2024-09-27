@@ -32,4 +32,7 @@ int processa_lista_adjacencia(const char* nome_arquivo, GrafoLista** grafo);
 int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo);
 int bfs_calcula_distancia_entre_vertices(GrafoLista* grafo, int vertice_inicial, int vertice_final);
 
+// Alteração do protótipo da função encontra_componentes_conexos
+void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int** tamanhos, int*** listas_vertices);
+
 #endif // BIBLIOTECA_GRAFOS_H

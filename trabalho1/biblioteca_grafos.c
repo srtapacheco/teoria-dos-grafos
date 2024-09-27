@@ -369,32 +369,94 @@ int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial) {
 }
 
 // Função para descobrir os componentes conexos do grafo
-void encontra_componentes_conexos(GrafoLista* grafo, FILE* arquivo_saida) {
+// Função para descobrir os componentes conexos do grafo
+void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int** tamanhos, int*** listas_vertices) {
+    // Aloca memória para armazenar se um vértice já foi visitado
     bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
-    int* componentes = (int*)malloc(grafo->num_vertices * sizeof(int));
-    int num_componentes = 0;
-
-    int* tamanhos = (int*)malloc(grafo->num_vertices * sizeof(int));
-    int** listas_vertices = (int**)malloc(grafo->num_vertices * sizeof(int*));
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        listas_vertices[i] = (int*)malloc(grafo->num_vertices * sizeof(int));
-        tamanhos[i] = 0;
+    if (visitado == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para 'visitado'.\n");
+        exit(EXIT_FAILURE);
     }
 
+    // Aloca memória para armazenar os componentes
+    int* componentes = (int*)malloc(grafo->num_vertices * sizeof(int));
+    if (componentes == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para 'componentes'.\n");
+        free(visitado);
+        exit(EXIT_FAILURE);
+    }
+
+    *num_componentes = 0;
+
+    // Aloca memória para armazenar o tamanho de cada componente
+    *tamanhos = (int*)malloc(grafo->num_vertices * sizeof(int));
+    if (*tamanhos == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para 'tamanhos'.\n");
+        free(visitado);
+        free(componentes);
+        exit(EXIT_FAILURE);
+    }
+
+    // Inicializa as variáveis e faz a contagem de componentes
+    *listas_vertices = NULL;  // Inicialmente sem memória alocada
+
+    // Exploração dos vértices
     for (int i = 0; i < grafo->num_vertices; i++) {
         if (!visitado[i]) {
-            num_componentes++;
+            (*num_componentes)++;
             int tamanho = 0;
             int inicio = 0, fim = 0;
-            componentes[i] = num_componentes;
 
+            componentes[i] = *num_componentes;
+
+            // Realoca memória para armazenar as listas de vértices por componente
+            *listas_vertices = (int**)realloc(*listas_vertices, (*num_componentes) * sizeof(int*));
+            if (*listas_vertices == NULL) {
+                fprintf(stderr, "Erro ao realocar memória para 'listas_vertices'.\n");
+                free(visitado);
+                free(componentes);
+                free(*tamanhos);
+                exit(EXIT_FAILURE);
+            }
+
+            (*listas_vertices)[*num_componentes - 1] = NULL;  // Inicializa como NULL
+
+            // Fila para realizar a busca em largura (BFS)
             int* fila = (int*)malloc(grafo->num_vertices * sizeof(int));
+            if (fila == NULL) {
+                fprintf(stderr, "Erro ao alocar memória para 'fila'.\n");
+                free(visitado);
+                free(componentes);
+                for (int k = 0; k < *num_componentes; k++) {
+                    free((*listas_vertices)[k]);
+                }
+                free(*listas_vertices);
+                free(*tamanhos);
+                exit(EXIT_FAILURE);
+            }
+
             fila[fim++] = i;
             visitado[i] = true;
 
             while (inicio < fim) {
                 int vertice_atual = fila[inicio++];
-                listas_vertices[num_componentes - 1][tamanho++] = vertice_atual + 1;
+
+                // Realoca memória para adicionar o vértice à componente atual
+                (*listas_vertices)[*num_componentes - 1] = (int*)realloc((*listas_vertices)[*num_componentes - 1], (tamanho + 1) * sizeof(int));
+                if ((*listas_vertices)[*num_componentes - 1] == NULL) {
+                    fprintf(stderr, "Erro ao realocar memória para 'listas_vertices[%d]'.\n", *num_componentes - 1);
+                    free(visitado);
+                    free(componentes);
+                    free(fila);
+                    for (int k = 0; k < *num_componentes; k++) {
+                        free((*listas_vertices)[k]);
+                    }
+                    free(*listas_vertices);
+                    free(*tamanhos);
+                    exit(EXIT_FAILURE);
+                }
+
+                (*listas_vertices)[*num_componentes - 1][tamanho++] = vertice_atual + 1;
 
                 No* adjacente = grafo->lista_adjacencia[vertice_atual];
                 while (adjacente != NULL) {
@@ -406,44 +468,14 @@ void encontra_componentes_conexos(GrafoLista* grafo, FILE* arquivo_saida) {
                 }
             }
 
-            tamanhos[num_componentes - 1] = tamanho;
+            (*tamanhos)[*num_componentes - 1] = tamanho;
             free(fila);
         }
     }
 
-    // Ordenar os componentes por tamanho (decrescente)
-    for (int i = 0; i < num_componentes - 1; i++) {
-        for (int j = i + 1; j < num_componentes; j++) {
-            if (tamanhos[i] < tamanhos[j]) {
-                int temp_tamanho = tamanhos[i];
-                tamanhos[i] = tamanhos[j];
-                tamanhos[j] = temp_tamanho;
-
-                int* temp_lista = listas_vertices[i];
-                listas_vertices[i] = listas_vertices[j];
-                listas_vertices[j] = temp_lista;
-            }
-        }
-    }
-
-    fprintf(arquivo_saida, "\nComponentes Conexas:\nNúmero de componentes conexas: %d\n", num_componentes);
-    for (int i = 0; i < num_componentes; i++) {
-        fprintf(arquivo_saida, "Componente %d:\n", i + 1);
-        fprintf(arquivo_saida, "  Tamanho: %d\n  Vértices: ", tamanhos[i]);
-        for (int j = 0; j < tamanhos[i]; j++) {
-            if (j != 0) fprintf(arquivo_saida, ", ");
-            fprintf(arquivo_saida, "%d", listas_vertices[i][j]);
-        }
-        fprintf(arquivo_saida, "\n");
-    }
-
+    // Limpeza da memória alocada
     free(visitado);
     free(componentes);
-    free(tamanhos);
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        free(listas_vertices[i]);
-    }
-    free(listas_vertices);
 }
 
 // Função para calcular o diâmetro do grafo
