@@ -40,23 +40,18 @@ double calcula_tempo_bfs_lista(GrafoLista* grafo, int num_buscas) {
 }
 
 int main() {
-    // Carrega o grafo da matriz de adjacência
     GrafoMatriz* grafo_matriz = NULL;
     processa_matriz_adjacencia("grafo_3.txt", &grafo_matriz);
 
-    //Carrega o grafo da lista de adjacência
     GrafoLista* grafo_lista = NULL;
     processa_lista_adjacencia("grafo_6.txt", &grafo_lista);
 
-    // Calcula o tempo médio para a matriz de adjacência
     double tempo_medio_matriz = calcula_tempo_bfs_matriz(grafo_matriz, NUM_BUSCAS);
     printf("Tempo médio BFS (matriz de adjacência): %.6f segundos\n", tempo_medio_matriz);
 
-    // Calcula o tempo médio para a lista de adjacência
     double tempo_medio_lista = calcula_tempo_bfs_lista(grafo_lista, NUM_BUSCAS);
     printf("Tempo médio BFS (lista de adjacência): %.6f segundos\n", tempo_medio_lista);
 
-    // Libera a memória
     libera_matriz_adjacencia(grafo_matriz);
     libera_lista_adjacencia(grafo_lista);
 

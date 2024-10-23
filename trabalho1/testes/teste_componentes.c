@@ -7,18 +7,14 @@ int main() {
     GrafoLista* grafo_lista;
     FILE* arquivo_saida = fopen("saida_componentes.txt", "w");
 
-    // Carrega o grafo
     processa_lista_adjacencia("grafo_6.txt", &grafo_lista);
 
-    // Variáveis para armazenar os resultados
     int num_componentes;
     int* tamanhos;
     int** listas_vertices;
 
-    // Encontra as componentes conexas
     encontra_componentes_conexos(grafo_lista, &num_componentes, &tamanhos, &listas_vertices);
 
-    // Cálculo do maior e menor componente
     int maior_componente = tamanhos[0];
     int menor_componente = tamanhos[0];
     
@@ -31,7 +27,6 @@ int main() {
         }
     }
 
-    // Grava os resultados no arquivo de saída
     fprintf(arquivo_saida, "\nComponentes Conexas:\nNúmero de componentes conexas: %d\n", num_componentes);
     fprintf(arquivo_saida, "Tamanho da maior componente: %d\n", maior_componente);
     fprintf(arquivo_saida, "Tamanho da menor componente: %d\n", menor_componente);
@@ -46,7 +41,6 @@ int main() {
         fprintf(arquivo_saida, "\n");
     }
 
-    // Libera a memória alocada para o grafo e os resultados
     libera_lista_adjacencia(grafo_lista);
     for (int i = 0; i < num_componentes; i++) {
         free(listas_vertices[i]);

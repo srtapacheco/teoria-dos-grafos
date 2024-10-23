@@ -10,29 +10,25 @@ int main() {
     FILE* arquivo_saida_lista = fopen("saida_grafo_lista.txt", "w");
     FILE* arquivo_saida_matriz = fopen("saida_grafo_matriz.txt", "w");
 
-    // Entrada de dados pelo usuário
     printf("Digite o nome do arquivo de entrada (com extensão): ");
     scanf("%s", nome_arquivo);
 
     printf("Digite o vértice inicial (começando em 1): ");
     scanf("%d", &vertice_inicial);
-    vertice_inicial--; // Para ajustar ao índice 0
+    vertice_inicial--; 
 
-    // Processar lista de adjacência
     int num_vertices_lista = processa_lista_adjacencia(nome_arquivo, &grafo_lista);
     if (num_vertices_lista == -1) {
         printf("Erro ao processar o arquivo (Lista de Adjacência).\n");
         return 1;
     }
 
-    // Processar matriz de adjacência
     int num_vertices_matriz = processa_matriz_adjacencia(nome_arquivo, &grafo_matriz);
     if (num_vertices_matriz == -1) {
         printf("Erro ao processar o arquivo (Matriz de Adjacência).\n");
         return 1;
     }
 
-    // Calcular graus e número de arestas - Lista de Adjacência
     int grau_min_lista, grau_max_lista, num_arestas_lista;
     double grau_medio_lista, mediana_grau_lista;
     calcula_graus(grafo_lista, &grau_min_lista, &grau_max_lista, &grau_medio_lista, &mediana_grau_lista, &num_arestas_lista);

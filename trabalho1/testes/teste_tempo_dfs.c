@@ -3,45 +3,44 @@
 #include <time.h>
 #include "biblioteca_grafos.h"
 
-#define NUM_BUSCAS 100  // Número de buscas que você quer executar
+#define NUM_BUSCAS 100 
 
-// Função para calcular o tempo médio de execução da DFS com matriz de adjacência
 double calcula_tempo_dfs_matriz(GrafoMatriz* grafo, int num_buscas) {
     clock_t inicio, fim;
     double tempo_total = 0.0;
     
     for (int i = 0; i < num_buscas; i++) {
-        int vertice_inicial = rand() % grafo->num_vertices;  // Escolha aleatória do vértice inicial
-        FILE* arquivo_saida = fopen("/dev/null", "w");  // Para descartar a saída
+        int vertice_inicial = rand() % grafo->num_vertices;  
+        FILE* arquivo_saida = fopen("/dev/null", "w");  
         inicio = clock();
-        dfs_matriz_adjacencia(grafo, vertice_inicial, arquivo_saida);  // Executa DFS para a matriz de adjacência
+        dfs_matriz_adjacencia(grafo, vertice_inicial, arquivo_saida); 
         fim = clock();
         fclose(arquivo_saida);
         tempo_total += (double)(fim - inicio) / CLOCKS_PER_SEC;
     }
     
-    return tempo_total / num_buscas;  // Tempo médio por busca
+    return tempo_total / num_buscas;  
 }
 
-// Função para calcular o tempo médio de execução da DFS com lista de adjacência
+
 double calcula_tempo_dfs_lista(GrafoLista* grafo, int num_buscas) {
     clock_t inicio, fim;
     double tempo_total = 0.0;
     
     for (int i = 0; i < num_buscas; i++) {
-        int vertice_inicial = rand() % grafo->num_vertices;  // Escolha aleatória do vértice inicial
+        int vertice_inicial = rand() % grafo->num_vertices; 
         printf("Executando DFS com vértice inicial: %d\n", vertice_inicial);
         
-        FILE* arquivo_saida = fopen("/dev/null", "w");  // Para descartar a saída
+        FILE* arquivo_saida = fopen("/dev/null", "w");  
         inicio = clock();
-        processa_dfs_lista(grafo, vertice_inicial, arquivo_saida);  // Executa DFS para a lista de adjacência
+        processa_dfs_lista(grafo, vertice_inicial, arquivo_saida);  
         fim = clock();
         fclose(arquivo_saida);
         
         tempo_total += (double)(fim - inicio) / CLOCKS_PER_SEC;
     }
     
-    return tempo_total / num_buscas;  // Tempo médio por busca
+    return tempo_total / num_buscas;  
 }
 
 

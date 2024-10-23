@@ -37,4 +37,4 @@ int calcula_diametro(GrafoLista* grafo);
 double calcula_tempo_dfs_lista(GrafoLista* grafo, int num_buscas);
 void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int *nivel, bool *visitado, int nivel_atual);
 
-#endif // BIBLIOTECA_GRAFOS_H
+#endif
