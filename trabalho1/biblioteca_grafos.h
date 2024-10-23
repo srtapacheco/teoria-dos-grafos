@@ -1,5 +1,6 @@
 #ifndef BIBLIOTECA_GRAFOS_H
 #define BIBLIOTECA_GRAFOS_H
+#include <stdbool.h>
 
 typedef struct No {
     int vertice;
@@ -31,8 +32,9 @@ void processa_dfs_lista(GrafoLista* grafo, int vertice_inicial, FILE* arquivo_sa
 int processa_lista_adjacencia(const char* nome_arquivo, GrafoLista** grafo);
 int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo);
 int bfs_calcula_distancia_entre_vertices(GrafoLista* grafo, int vertice_inicial, int vertice_final);
-
-// Alteração do protótipo da função encontra_componentes_conexos
 void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int** tamanhos, int*** listas_vertices);
+int calcula_diametro(GrafoLista* grafo);
+double calcula_tempo_dfs_lista(GrafoLista* grafo, int num_buscas);
+void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int *nivel, bool *visitado, int nivel_atual);
 
 #endif // BIBLIOTECA_GRAFOS_H

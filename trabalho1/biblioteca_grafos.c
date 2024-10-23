@@ -1,12 +1,9 @@
-// biblioteca_grafos.c
 #include <stdio.h>
 #include <stdlib.h>
 #include "biblioteca_grafos.h"
 #include <stdbool.h>
 
-// Implementação das funções
 
-// Função para criar a lista de adjacência
 GrafoLista* cria_lista_adjacencia(int num_vertices) {
     GrafoLista* grafo = (GrafoLista*)malloc(sizeof(GrafoLista));
     grafo->num_vertices = num_vertices;
@@ -18,7 +15,6 @@ GrafoLista* cria_lista_adjacencia(int num_vertices) {
     return grafo;
 }
 
-// Função para criar a matriz de adjacência
 GrafoMatriz* cria_matriz_adjacencia(int num_vertices) {
     GrafoMatriz* grafo = (GrafoMatriz*)malloc(sizeof(GrafoMatriz));
     grafo->num_vertices = num_vertices;
@@ -30,7 +26,6 @@ GrafoMatriz* cria_matriz_adjacencia(int num_vertices) {
     return grafo;
 }
 
-// Função para adicionar aresta na lista de adjacência
 void adiciona_aresta_lista(GrafoLista* grafo, int v1, int v2) {
     No* novo_no = (No*)malloc(sizeof(No));
     novo_no->vertice = v2;
@@ -43,13 +38,11 @@ void adiciona_aresta_lista(GrafoLista* grafo, int v1, int v2) {
     grafo->lista_adjacencia[v2] = novo_no;
 }
 
-// Função para adicionar aresta na matriz de adjacência
 void adiciona_aresta_matriz(GrafoMatriz* grafo, int v1, int v2) {
     grafo->matriz_adjacencia[v1][v2] = 1;
-    grafo->matriz_adjacencia[v2][v1] = 1; // Grafo não direcionado
+    grafo->matriz_adjacencia[v2][v1] = 1; 
 }
 
-// Função para liberar memória da lista de adjacência
 void libera_lista_adjacencia(GrafoLista* grafo) {
     for (int i = 0; i < grafo->num_vertices; i++) {
         No* no_atual = grafo->lista_adjacencia[i];
@@ -63,7 +56,7 @@ void libera_lista_adjacencia(GrafoLista* grafo) {
     free(grafo);
 }
 
-// Função para liberar memória da matriz de adjacência
+
 void libera_matriz_adjacencia(GrafoMatriz* grafo) {
     for (int i = 0; i < grafo->num_vertices; i++) {
         free(grafo->matriz_adjacencia[i]);
@@ -72,7 +65,7 @@ void libera_matriz_adjacencia(GrafoMatriz* grafo) {
     free(grafo);
 }
 
-// Função para calcular o grau de um grafo em matriz de adjacência
+
 void calcula_graus_matriz(GrafoMatriz* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas) {
     int* graus = (int*)calloc(grafo->num_vertices, sizeof(int));
     int total_graus = 0;
@@ -96,7 +89,6 @@ void calcula_graus_matriz(GrafoMatriz* grafo, int* grau_min, int* grau_max, doub
 
     *grau_medio = (double)total_graus / grafo->num_vertices;
 
-    // Calcular a mediana
     for (int i = 0; i < grafo->num_vertices - 1; i++) {
         for (int j = i + 1; j < grafo->num_vertices; j++) {
             if (graus[i] > graus[j]) {
@@ -116,7 +108,6 @@ void calcula_graus_matriz(GrafoMatriz* grafo, int* grau_min, int* grau_max, doub
     free(graus);
 }
 
-// Função para realizar BFS em matriz de adjacência
 void bfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquivo_saida) {
     bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int* fila = (int*)malloc(grafo->num_vertices * sizeof(int));
@@ -146,7 +137,6 @@ void bfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquiv
     free(fila);
 }
 
-// Função para realizar DFS em matriz de adjacência
 void dfs_matriz_adjacencia_aux(GrafoMatriz* grafo, int vertice, bool* visitado) {
     visitado[vertice] = true;
 
@@ -172,7 +162,6 @@ void dfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquiv
     free(visitado);
 }
 
-// Função para processar o arquivo e representar o grafo em matriz de adjacência
 int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo) {
     FILE* arquivo = fopen(nome_arquivo, "r");
     if (arquivo == NULL) {
@@ -181,9 +170,9 @@ int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo) {
     }
 
     int num_vertices;
-    fscanf(arquivo, "%d", &num_vertices); // Ler o número de vértices do arquivo
+    fscanf(arquivo, "%d", &num_vertices); 
 
-    *grafo = cria_matriz_adjacencia(num_vertices); // Aloca dinamicamente a matriz de adjacência
+    *grafo = cria_matriz_adjacencia(num_vertices); 
 
     int v1, v2;
     while (fscanf(arquivo, "%d %d", &v1, &v2) != EOF) {
@@ -191,10 +180,9 @@ int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo) {
     }
 
     fclose(arquivo);
-    return num_vertices; // Retorna o número de vértices
+    return num_vertices; 
 }
 
-// Função para calcular o grau do grafo em lista de adjacência
 void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas) {
     int* graus = (int*)calloc(grafo->num_vertices, sizeof(int));
     int total_graus = 0;
@@ -218,7 +206,6 @@ void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau
 
     *grau_medio = (double)total_graus / grafo->num_vertices;
 
-    // Calcular a mediana
     for (int i = 0; i < grafo->num_vertices - 1; i++) {
         for (int j = i + 1; j < grafo->num_vertices; j++) {
             if (graus[i] > graus[j]) {
@@ -238,7 +225,7 @@ void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau
     free(graus);
 }
 
-// Função para realizar BFS em lista de adjacência
+
 void bfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_saida) {
     bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
@@ -277,7 +264,6 @@ void bfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_
     free(pai);
 }
 
-// Função para realizar DFS em lista de adjacência
 void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int *nivel, bool *visitado, int nivel_atual) {
     visitado[vertice_inicial] = true;
     nivel[vertice_inicial] = nivel_atual;
@@ -292,7 +278,6 @@ void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int 
     }
 }
 
-// Função para iniciar DFS na lista de adjacência
 void processa_dfs_lista(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_saida) {
     bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int *pai = (int*)malloc(grafo->num_vertices * sizeof(int));
@@ -312,7 +297,6 @@ void processa_dfs_lista(GrafoLista *grafo, int vertice_inicial, FILE *arquivo_sa
     free(nivel);
 }
 
-// Função para processar o arquivo e representar o grafo em lista de adjacência
 int processa_lista_adjacencia(const char *nome_arquivo, GrafoLista **grafo) {
     FILE *arquivo = fopen(nome_arquivo, "r");
     if (arquivo == NULL) {
@@ -321,9 +305,9 @@ int processa_lista_adjacencia(const char *nome_arquivo, GrafoLista **grafo) {
     }
 
     int num_vertices;
-    fscanf(arquivo, "%d", &num_vertices);  // Ler o número de vértices do arquivo
+    fscanf(arquivo, "%d", &num_vertices); 
 
-    *grafo = cria_lista_adjacencia(num_vertices);  // Aloca dinamicamente a lista de adjacência
+    *grafo = cria_lista_adjacencia(num_vertices); 
 
     int v1, v2;
     while (fscanf(arquivo, "%d %d", &v1, &v2) != EOF) {
@@ -331,31 +315,35 @@ int processa_lista_adjacencia(const char *nome_arquivo, GrafoLista **grafo) {
     }
 
     fclose(arquivo);
-    return num_vertices;  // Retorna o número de vértices
+    return num_vertices;  
 }
 
-// Função para calcular a maior distância a partir de um vértice (BFS auxiliar)
-int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial) {
+int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial, int *distancia_maxima) {
     bool *visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
     int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
     int *nivel = (int*)calloc(grafo->num_vertices, sizeof(int));
 
     int inicio = 0, fim = 0;
-    visitado[vertice_inicial] = true;
     fila[fim++] = vertice_inicial;
+    visitado[vertice_inicial] = true;
     nivel[vertice_inicial] = 0;
 
-    int max_nivel = 0;
+    int vertice_mais_distante = vertice_inicial;
+    *distancia_maxima = 0;
+
     while (inicio < fim) {
         int vertice_atual = fila[inicio++];
+
         No* adjacente = grafo->lista_adjacencia[vertice_atual];
         while (adjacente != NULL) {
             if (!visitado[adjacente->vertice]) {
                 visitado[adjacente->vertice] = true;
                 fila[fim++] = adjacente->vertice;
                 nivel[adjacente->vertice] = nivel[vertice_atual] + 1;
-                if (nivel[adjacente->vertice] > max_nivel) {
-                    max_nivel = nivel[adjacente->vertice];
+
+                if (nivel[adjacente->vertice] > *distancia_maxima) {
+                    *distancia_maxima = nivel[adjacente->vertice];
+                    vertice_mais_distante = adjacente->vertice;
                 }
             }
             adjacente = adjacente->proximo;
@@ -365,11 +353,9 @@ int bfs_calcula_distancia(GrafoLista *grafo, int vertice_inicial) {
     free(visitado);
     free(fila);
     free(nivel);
-    return max_nivel;
+    return vertice_mais_distante;
 }
 
-// Função para descobrir os componentes conexos do grafo
-// Função para descobrir os componentes conexos do grafo
 void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int** tamanhos, int*** listas_vertices) {
     // Aloca memória para armazenar se um vértice já foi visitado
     bool* visitado = (bool*)calloc(grafo->num_vertices, sizeof(bool));
@@ -473,23 +459,20 @@ void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int**
         }
     }
 
-    // Limpeza da memória alocada
     free(visitado);
     free(componentes);
 }
 
-// Função para calcular o diâmetro do grafo
 int calcula_diametro(GrafoLista* grafo) {
-    int diametro = 0;
+     int distancia_maxima = 0;
 
-    for (int i = 0; i < grafo->num_vertices; i++) {
-        int max_dist = bfs_calcula_distancia(grafo, i);
-        if (max_dist > diametro) {
-            diametro = max_dist;
-        }
-    }
+    // Executa o primeiro BFS a partir de um vértice arbitrário (vértice 0)
+    int vertice_mais_distante = bfs_calcula_distancia(grafo, 0, &distancia_maxima);
 
-    return diametro;
+    // Executa o segundo BFS a partir do vértice mais distante encontrado
+    bfs_calcula_distancia(grafo, vertice_mais_distante, &distancia_maxima);
+
+    return distancia_maxima;
 }
 
 int bfs_calcula_distancia_entre_vertices(GrafoLista *grafo, int vertice_inicial, int vertice_final) {
@@ -504,8 +487,6 @@ int bfs_calcula_distancia_entre_vertices(GrafoLista *grafo, int vertice_inicial,
 
     while (inicio < fim) {
         int vertice_atual = fila[inicio++];
-
-        // Se encontramos o vértice final, retornamos a distância
         if (vertice_atual == vertice_final) {
             int distancia = nivel[vertice_final];
             free(visitado);
