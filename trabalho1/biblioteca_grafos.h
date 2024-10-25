@@ -1,40 +1,32 @@
 #ifndef BIBLIOTECA_GRAFOS_H
 #define BIBLIOTECA_GRAFOS_H
+
 #include <stdbool.h>
 
-typedef struct No {
+typedef struct NoListaAdj {
     int vertice;
-    struct No* proximo;
-} No;
+    struct NoListaAdj *proximo;
+} NoListaAdj;
 
-typedef struct GrafoLista {
+typedef struct {
     int num_vertices;
-    No** lista_adjacencia;
-} GrafoLista;
+    int num_arestas;
+    int *graus;
+    NoListaAdj **lista_adj;
+    int **matriz_adj;
+} Grafo;
 
-typedef struct GrafoMatriz {
-    int num_vertices;
-    int** matriz_adjacencia;
-} GrafoMatriz;
+Grafo* criar_grafo(int num_vertices);
+void adicionar_aresta(Grafo *grafo, int v1, int v2);
+void liberar_grafo(Grafo *grafo);
 
-GrafoLista* cria_lista_adjacencia(int num_vertices);
-GrafoMatriz* cria_matriz_adjacencia(int num_vertices);
-void adiciona_aresta_lista(GrafoLista* grafo, int v1, int v2);
-void adiciona_aresta_matriz(GrafoMatriz* grafo, int v1, int v2);
-void libera_lista_adjacencia(GrafoLista* grafo);
-void libera_matriz_adjacencia(GrafoMatriz* grafo);
-void bfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquivo_saida);
-void dfs_matriz_adjacencia(GrafoMatriz* grafo, int vertice_inicial, FILE* arquivo_saida);
-void calcula_graus_matriz(GrafoMatriz* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas);
-void calcula_graus(GrafoLista* grafo, int* grau_min, int* grau_max, double* grau_medio, double* mediana_grau, int* num_arestas);
-void bfs_lista_adjacencia(GrafoLista* grafo, int vertice_inicial, FILE* arquivo_saida);
-void processa_dfs_lista(GrafoLista* grafo, int vertice_inicial, FILE* arquivo_saida);
-int processa_lista_adjacencia(const char* nome_arquivo, GrafoLista** grafo);
-int processa_matriz_adjacencia(const char* nome_arquivo, GrafoMatriz** grafo);
-int bfs_calcula_distancia_entre_vertices(GrafoLista* grafo, int vertice_inicial, int vertice_final);
-void encontra_componentes_conexos(GrafoLista* grafo, int* num_componentes, int** tamanhos, int*** listas_vertices);
-int calcula_diametro(GrafoLista* grafo);
-double calcula_tempo_dfs_lista(GrafoLista* grafo, int num_buscas);
-void dfs_lista_adjacencia(GrafoLista *grafo, int vertice_inicial, int *pai, int *nivel, bool *visitado, int nivel_atual);
+void busca_em_largura(Grafo *grafo, int vertice_inicial, int *pais);
+void busca_em_profundidade(Grafo *grafo, int vertice_inicial, int *pais);
+int calcular_distancia(Grafo *grafo, int origem, int destino);
+int calcular_diametro(Grafo *grafo);
+void encontrar_componentes_conexas(Grafo *grafo);
+
+Grafo* ler_grafo_do_arquivo(const char* nome_arquivo);
+void salvar_informacoes_grafo(Grafo *grafo, const char *nome_arquivo_saida);
 
 #endif
