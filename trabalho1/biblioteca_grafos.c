@@ -3,23 +3,76 @@
 #include "biblioteca_grafos.h"
 #include <stdbool.h>
 
-Grafo *criar_grafo(int num_vertices)
+Grafo *criar_grafo_lista_adj(int num_vertices)
 {
     Grafo *grafo = (Grafo *)malloc(sizeof(Grafo));
+    if (!grafo)
+    {
+        printf("Erro ao alocar memória para o grafo.\n");
+        return NULL;
+    }
+
     grafo->num_vertices = num_vertices;
     grafo->num_arestas = 0;
     grafo->lista_adj = (NoListaAdj **)malloc(num_vertices * sizeof(NoListaAdj *));
     grafo->graus = (int *)calloc(num_vertices, sizeof(int));
+    grafo->matriz_adj = NULL;
+    grafo->tipo_representacao = LISTA_ADJACENCIA;
+
+    if (!grafo->lista_adj || !grafo->graus)
+    {
+        printf("Erro ao alocar memória para lista de adjacência ou graus.\n");
+        free(grafo);
+        return NULL;
+    }
 
     for (int i = 0; i < num_vertices; i++)
     {
         grafo->lista_adj[i] = NULL;
     }
 
+    return grafo;
+}
+
+Grafo *criar_grafo_matriz_adj(int num_vertices)
+{
+    Grafo *grafo = (Grafo *)malloc(sizeof(Grafo));
+    if (!grafo)
+    {
+        printf("Erro ao alocar memória para o grafo.\n");
+        return NULL;
+    }
+
+    grafo->num_vertices = num_vertices;
+    grafo->num_arestas = 0;
+    grafo->lista_adj = NULL;
+    grafo->graus = (int *)calloc(num_vertices, sizeof(int));
     grafo->matriz_adj = (int **)malloc(num_vertices * sizeof(int *));
+    grafo->tipo_representacao = MATRIZ_ADJACENCIA;
+
+    if (!grafo->matriz_adj || !grafo->graus)
+    {
+        printf("Erro ao alocar memória para matriz de adjacência ou graus.\n");
+        free(grafo);
+        return NULL;
+    }
+
     for (int i = 0; i < num_vertices; i++)
     {
         grafo->matriz_adj[i] = (int *)calloc(num_vertices, sizeof(int));
+        if (!grafo->matriz_adj[i])
+        {
+            printf("Erro ao alocar memória para linha da matriz de adjacência.\n");
+            // Liberar memória já alocada
+            for (int j = 0; j < i; j++)
+            {
+                free(grafo->matriz_adj[j]);
+            }
+            free(grafo->matriz_adj);
+            free(grafo->graus);
+            free(grafo);
+            return NULL;
+        }
     }
 
     return grafo;
@@ -27,20 +80,40 @@ Grafo *criar_grafo(int num_vertices)
 
 void adicionar_aresta(Grafo *grafo, int v1, int v2)
 {
-    NoListaAdj *novoNo = (NoListaAdj *)malloc(sizeof(NoListaAdj));
-    novoNo->vertice = v2;
-    novoNo->proximo = grafo->lista_adj[v1];
-    grafo->lista_adj[v1] = novoNo;
-    grafo->graus[v1]++;
+    if (grafo->tipo_representacao == LISTA_ADJACENCIA)
+    {
+        NoListaAdj *novoNo = (NoListaAdj *)malloc(sizeof(NoListaAdj));
+        if (!novoNo)
+        {
+            printf("Erro ao alocar memória para nova aresta.\n");
+            return;
+        }
 
-    novoNo = (NoListaAdj *)malloc(sizeof(NoListaAdj));
-    novoNo->vertice = v1;
-    novoNo->proximo = grafo->lista_adj[v2];
-    grafo->lista_adj[v2] = novoNo;
-    grafo->graus[v2]++;
+        novoNo->vertice = v2;
+        novoNo->proximo = grafo->lista_adj[v1];
+        grafo->lista_adj[v1] = novoNo;
+        grafo->graus[v1]++;
 
-    grafo->matriz_adj[v1][v2] = 1;
-    grafo->matriz_adj[v2][v1] = 1;
+        novoNo = (NoListaAdj *)malloc(sizeof(NoListaAdj));
+        if (!novoNo)
+        {
+            printf("Erro ao alocar memória para nova aresta.\n");
+            return;
+        }
+
+        novoNo->vertice = v1;
+        novoNo->proximo = grafo->lista_adj[v2];
+        grafo->lista_adj[v2] = novoNo;
+        grafo->graus[v2]++;
+    }
+    else if (grafo->tipo_representacao == MATRIZ_ADJACENCIA)
+    {
+        grafo->matriz_adj[v1][v2] = 1;
+        grafo->matriz_adj[v2][v1] = 1;
+        grafo->graus[v1]++;
+        grafo->graus[v2]++;
+    }
+
     grafo->num_arestas++;
 }
 
@@ -71,7 +144,7 @@ void exibir_matriz_adj(Grafo *grafo)
     }
 }
 
-Grafo *ler_grafo_do_arquivo(const char *nome_arquivo)
+Grafo *ler_grafo_do_arquivo(const char *nome_arquivo, RepresentacaoGrafo tipo_representacao)
 {
     FILE *arquivo = fopen(nome_arquivo, "r");
     if (!arquivo)
@@ -88,7 +161,27 @@ Grafo *ler_grafo_do_arquivo(const char *nome_arquivo)
         return NULL;
     }
 
-    Grafo *grafo = criar_grafo(num_vertices);
+    Grafo *grafo;
+    if (tipo_representacao == LISTA_ADJACENCIA)
+    {
+        grafo = criar_grafo_lista_adj(num_vertices);
+    }
+    else if (tipo_representacao == MATRIZ_ADJACENCIA)
+    {
+        grafo = criar_grafo_matriz_adj(num_vertices);
+    }
+    else
+    {
+        printf("Tipo de representação desconhecido.\n");
+        fclose(arquivo);
+        return NULL;
+    }
+
+    if (!grafo)
+    {
+        fclose(arquivo);
+        return NULL;
+    }
 
     int v1, v2;
     while (fscanf(arquivo, "%d %d", &v1, &v2) == 2)
@@ -277,41 +370,25 @@ void busca_em_profundidade(Grafo *grafo, int vertice_inicial, int *pais)
     free(pilha);
 }
 
-int calcular_distancia(Grafo *grafo, int origem, int destino) {
+int calcular_distancia(Grafo *grafo, int origem, int destino)
+{
     // Ajuste de indexação de 1-based para 0-based
     origem--;
     destino--;
 
-    // Se a origem e o destino forem o mesmo vértice, a distância é zero
-    if (origem == destino) return 0;
+    if (origem == destino)
+        return 0;
 
     // Verificar se os vértices origem e destino são válidos
-    if (origem < 0 || origem >= grafo->num_vertices || destino < 0 || destino >= grafo->num_vertices) {
+    if (origem < 0 || origem >= grafo->num_vertices || destino < 0 || destino >= grafo->num_vertices)
+    {
         return -1; // Vértice inválido
     }
 
-    // Alocar arrays de visitados e distâncias
-    bool *visitados = (bool*)calloc(grafo->num_vertices, sizeof(bool));
-    if (!visitados) {
-        printf("Erro: Falha na alocação de memória para 'visitados'.\n");
-        return -1;
-    }
-
-    int *distancia = (int*)calloc(grafo->num_vertices, sizeof(int));
-    if (!distancia) {
-        printf("Erro: Falha na alocação de memória para 'distancia'.\n");
-        free(visitados);
-        return -1;
-    }
-
-    int *fila = (int*)malloc(grafo->num_vertices * sizeof(int));
-    if (!fila) {
-        printf("Erro: Falha na alocação de memória para 'fila'.\n");
-        free(visitados);
-        free(distancia);
-        return -1;
-    }
-
+    // Alocação dos arrays de visitados e distâncias
+    bool *visitados = (bool *)calloc(grafo->num_vertices, sizeof(bool));
+    int *distancia = (int *)calloc(grafo->num_vertices, sizeof(int));
+    int *fila = (int *)malloc(grafo->num_vertices * sizeof(int));
     int inicio = 0, fim = 0;
 
     // Marcar o vértice de origem como visitado e inicializar sua distância
@@ -320,18 +397,22 @@ int calcular_distancia(Grafo *grafo, int origem, int destino) {
     distancia[origem] = 0;
 
     // Loop principal da BFS
-    while (inicio < fim) {
+    while (inicio < fim)
+    {
         int v = fila[inicio++];
 
         NoListaAdj *adj = grafo->lista_adj[v];
-        while (adj != NULL) {
-            if (!visitados[adj->vertice]) {
+        while (adj != NULL)
+        {
+            if (!visitados[adj->vertice])
+            {
                 visitados[adj->vertice] = true;
                 distancia[adj->vertice] = distancia[v] + 1; // Incrementa a distância para a camada seguinte
                 fila[fim++] = adj->vertice;
 
                 // Verificar se o vértice destino foi alcançado
-                if (adj->vertice == destino) {
+                if (adj->vertice == destino)
+                {
                     int dist = distancia[destino];
                     free(visitados);
                     free(distancia);
@@ -349,6 +430,7 @@ int calcular_distancia(Grafo *grafo, int origem, int destino) {
     free(fila);
     return -1; // Retorna -1 se não houver caminho entre origem e destino
 }
+
 int calcular_diametro(Grafo *grafo)
 {
     int diametro = 0;
@@ -411,21 +493,26 @@ void encontrar_componentes_conexas(Grafo *grafo)
     free(visitados);
 }
 
-void liberar_grafo(Grafo *grafo)
-{
-    for (int i = 0; i < grafo->num_vertices; i++)
-    {
-        NoListaAdj *temp = grafo->lista_adj[i];
-        while (temp)
-        {
-            NoListaAdj *prox = temp->proximo;
-            free(temp);
-            temp = prox;
+void liberar_grafo(Grafo *grafo) {
+    if (grafo->lista_adj) {
+        for (int i = 0; i < grafo->num_vertices; i++) {
+            NoListaAdj *temp = grafo->lista_adj[i];
+            while (temp) {
+                NoListaAdj *prox = temp->proximo;
+                free(temp);
+                temp = prox;
+            }
         }
-        free(grafo->matriz_adj[i]);
+        free(grafo->lista_adj);
     }
-    free(grafo->lista_adj);
-    free(grafo->matriz_adj);
+    
+    if (grafo->matriz_adj) {
+        for (int i = 0; i < grafo->num_vertices; i++) {
+            free(grafo->matriz_adj[i]);
+        }
+        free(grafo->matriz_adj);
+    }
+    
     free(grafo->graus);
     free(grafo);
 }

@@ -187,12 +187,40 @@ void salvar_diametro(Grafo *grafo, const char *nome_arquivo)
 int main()
 {
     criar_pasta_resultados();
-    Grafo *grafo = ler_grafo_do_arquivo("grafo_3.txt");
+
+    // Interação com o usuário para escolher a representação do grafo
+    int escolha_rep;
+    printf("Escolha a representação do grafo:\n");
+    printf("1. Lista de Adjacência\n");
+    printf("2. Matriz de Adjacência\n");
+    printf("Escolha: ");
+    scanf("%d", &escolha_rep);
+
+    // Determina a representação escolhida
+    RepresentacaoGrafo tipo_representacao;
+    if (escolha_rep == 1)
+    {
+        tipo_representacao = LISTA_ADJACENCIA;
+    }
+    else if (escolha_rep == 2)
+    {
+        tipo_representacao = MATRIZ_ADJACENCIA;
+    }
+    else
+    {
+        printf("Opção inválida. Usando lista de adjacência como padrão.\n");
+        tipo_representacao = LISTA_ADJACENCIA;
+    }
+
+    // Carregar o grafo do arquivo com a representação escolhida
+    Grafo *grafo = ler_grafo_do_arquivo("grafo_3.txt", tipo_representacao);
     if (!grafo)
     {
         return 1;
     }
+    printf("Número de vértices: %d\n", grafo->num_vertices);
 
+    // A partir daqui, o restante da lógica do menu permanece a mesma
     int escolha;
     printf("\nSelecione o teste a ser executado:\n");
     printf("1. Teste de Memória\n");
@@ -288,7 +316,7 @@ int main()
         busca_em_largura(grafo, vertice_inicial, pais);
 
         // Exibir os pais dos vértices 10, 20 e 30, se existirem
-        int vertices_interessados[] = {10, 20, 30};
+        int vertices_interessados[] = {1, 2, 3};
         printf("Pais dos vértices 10, 20 e 30 na árvore de busca:\n");
         for (int i = 0; i < 3; i++)
         {
@@ -308,34 +336,38 @@ int main()
         break;
     }
 
-   case 5: {
-    // Teste de Distâncias entre Pares de Vértices - Processamento de um Par por Vez
-    int pares[3][2] = { {10, 20}, {10, 30}, {20, 30} }; // Lista de pares de vértices
-    int total_pares = 3;
+    case 5:
+    {
+        int pares[3][2] = {{10, 20}, {10, 30}, {20, 30}};
+        int total_pares = 3;
 
-    for (int i = 0; i < total_pares; i++) {
-        int origem = pares[i][0];
-        int destino = pares[i][1];
+        for (int i = 0; i < total_pares; i++)
+        {
+            int origem = pares[i][0];
+            int destino = pares[i][1];
 
-        // Verificar se os vértices fornecidos são válidos
-        if (origem < 1 || origem > grafo->num_vertices || destino < 1 || destino > grafo->num_vertices) {
-            printf("Erro: O par (%d, %d) contém vértices fora dos limites do grafo.\n", origem, destino);
-            continue;
+            // Verificar se os vértices fornecidos são válidos
+            if (origem < 1 || origem > grafo->num_vertices || destino < 1 || destino > grafo->num_vertices)
+            {
+                printf("Erro: O par (%d, %d) contém vértices fora dos limites do grafo.\n", origem, destino);
+                continue;
+            }
+
+            // Calcular a distância entre origem e destino para o par atual
+            
+            int distancia = calcular_distancia(grafo, origem, destino);
+            if (distancia != -1)
+            {
+                printf("Distância mínima entre %d e %d: %d\n", origem, destino, distancia);
+            }
+            else
+            {
+                printf("Não há caminho entre %d e %d.\n", origem, destino);
+            }
         }
-
-        // Calcular a distância entre origem e destino para o par atual
-        int distancia = calcular_distancia(grafo, origem, destino);
-        if (distancia != -1) {
-            printf("Distância mínima entre %d e %d: %d\n", origem, destino, distancia);
-        } else {
-            printf("Não há caminho entre %d e %d.\n", origem, destino);
-        }
+        break;
     }
-    break;
-}
 
-
-        
     case 6:
         salvar_componentes_conexas(grafo, "6.componentes_conexas.txt");
         break;
